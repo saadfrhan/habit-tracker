@@ -4,9 +4,8 @@ minimal cli habit tracker
 
 ```bash
 git clone https://github.com/saadfrhan/habit-tracker-cli
-# args
-python3 habit.py "complete assignments"
-# interactive
-python3 habit.py
-# then type: complete assignments
+python3 main.py add "complete assignments"
+python3 main.py list
+python3 main.py search assign
+python3 main.py <date>
 ```
