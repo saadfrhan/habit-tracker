@@ -1,42 +1,70 @@
 #!/usr/bin/env python3
 import sys
+import sqlite3
 from datetime import datetime, UTC
 from pathlib import Path
 
-LOG = Path("habits.log")
+DB_PATH = Path("habits.db")
 
-def append_entry(text: str):
-    ts = datetime.now(UTC).isoformat(timespec='seconds') + "Z"
-    entry = f"{ts} - {text.strip()}\n"
-    LOG.write_text(
-        LOG.read_text() + entry if LOG.exists() else entry, encoding="utf-8"
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS habits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            text TEXT NOT NULL      
+        )
+    """
     )
-    return entry
+    conn.commit()
+    conn.close()
+
+
+def add_entry(text: str):
+    ts = datetime.now(UTC).isoformat(timespec="seconds") + "Z"
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO habits (timestamp, text) VALUES (?, ?)", (ts, text.strip()))
+    conn.commit()
+    conn.close()
+    return ts, text.strip()
+
 
 def list_entries():
-    if not LOG.exists():
-        print("No entries found.")
-        return
-    print(LOG.read_text(), end="")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    for row in c.execute("SELECT id, timestamp, text FROM habits ORDER BY id"):
+        print(f"{row[0]} | {row[1]} | {row[2]}")
+    conn.close()
+
 
 def search_entries(keyword: str):
-    if not LOG.exists():
-        print("No entries found.")
-        return
-    keyword_lower = keyword.lower()
-    for line in LOG.read_text().splitlines():
-        if keyword_lower in line.lower():
-            print(line)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    for row in c.execute(
+        "SELECT id, timestamp, text FROM habits WHERE text LIKE ?", (f"%{keyword}%",)
+    ):
+        print(f"{row[0]} | {row[1]} | {row[2]}")
+    conn.close()
+
 
 def search_by_date(date_str: str):
-    if not LOG.exists():
-        print("No entries found.")
-        return
-    for line in LOG.read_text().splitlines():
-        if line.startswith(date_str):
-            print(line)
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    for row in c.execute(
+        "SELECT id, timestamp, text FROM habits WHERE timestamp LIKE ?",
+        (f"{date_str}%",),
+    ):
+        print(f"{row[0]} | {row[1]} | {row[2]}")
+    conn.close()
+
 
 def main():
+    init_db()
+
     if len(sys.argv) < 2:
         print("Usage:")
         print("  add <text>               Add a new entry")
@@ -44,7 +72,7 @@ def main():
         print("  search <keyword>         Search by keyword (case insensitive)")
         print("  search-date <YYYY-MM-DD> Search by exact date")
         sys.exit(1)
-    
+
     command = sys.argv[1].lower()
 
     if command == "add":
@@ -55,8 +83,8 @@ def main():
         if not text:
             print("No entry. Exiting.")
             sys.exit(1)
-        entry = append_entry(text)
-        print("Appended:", entry.strip())
+        ts, txt = add_entry(text)
+        print(f"Added: {ts} | {txt}")
 
     elif command == "list":
         list_entries()
@@ -66,7 +94,7 @@ def main():
             print("Keyword required.")
             sys.exit(1)
         search_entries(sys.argv[2])
-    
+
     elif command == "search-date":
         if len(sys.argv) < 3:
             print("Date required (YYYY-MM-DD).")
@@ -76,6 +104,7 @@ def main():
     else:
         print("Unknown command:", command)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
