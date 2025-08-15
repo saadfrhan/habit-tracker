@@ -1,0 +1,21 @@
+services:
+  habit-tracker:
+    build: .
+    container_name: habit-tracker
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./charts:/app/charts
+    environment:
+      - DB_DIR=/app/data
+    restart: unless-stopped
+
+  sqlite-browser:
+    image: linuxserver/sqlitebrowser
+    container_name: sqlite-browser
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped 

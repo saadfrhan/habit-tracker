@@ -202,4 +202,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# App files
 habits.db
+habits_export.csv
+stats_daily.png
