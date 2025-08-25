@@ -1,6 +1,10 @@
-# habit tracker cli
+# habit tracker
 
-minimal cli habit tracker uses sqlite3 for data persistence
+minimal cli and web habit tracker uses 
+- sqlite3 for data persistence, 
+- matplotlib for graphs, 
+- flask for web,
+- docker for containerization
 
 ## setup
 
